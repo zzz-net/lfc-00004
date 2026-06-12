@@ -240,6 +240,14 @@ router.post('/batches/:batch_no/sign', requireAuth, (req, res) => {
   }
 
   for (const box of batch.boxes) {
+    if (box.status === model.STATUS.FROZEN) {
+      return res.status(400).json({
+        error: {
+          code: 'BOX_FROZEN',
+          message: `箱号 ${box.box_no} 处于异常冻结状态，需主管复核关闭后方可继续处理，当前批次不可签收`
+        }
+      });
+    }
     if (box.status === model.STATUS.SIGNED) {
       return res.status(400).json({
         error: { code: 'DUPLICATE_SIGN', message: `箱号 ${box.box_no} 已签收，不可重复签收` }
