@@ -1,7 +1,9 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const routes = require('./routes');
+const inventoryCheckRoutes = require('./routes/inventoryCheck');
 const { STATUS_LABELS } = require('./models/dataModel');
+const { CHECK_STATUS_LABELS, DIFF_TYPE_LABELS } = require('./models/inventoryCheckModel');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,6 +26,7 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api', routes);
+app.use('/api', inventoryCheckRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
@@ -53,6 +56,16 @@ app.listen(PORT, () => {
   console.log('');
   console.log('  箱子状态流转:');
   Object.entries(STATUS_LABELS).forEach(([k, v]) => {
+    console.log(`    - ${k}: ${v}`);
+  });
+  console.log('');
+  console.log('  盘点单状态:');
+  Object.entries(CHECK_STATUS_LABELS).forEach(([k, v]) => {
+    console.log(`    - ${k}: ${v}`);
+  });
+  console.log('');
+  console.log('  盘点差异类型:');
+  Object.entries(DIFF_TYPE_LABELS).forEach(([k, v]) => {
     console.log(`    - ${k}: ${v}`);
   });
   console.log('');

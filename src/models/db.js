@@ -80,6 +80,65 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_audit_batch_no ON audit_logs(batch_no);
   CREATE INDEX IF NOT EXISTS idx_audit_box_no ON audit_logs(box_no);
 
+  CREATE TABLE IF NOT EXISTS inventory_checks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    check_no TEXT UNIQUE NOT NULL,
+    location TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'DRAFT'
+      CHECK (status IN ('DRAFT', 'SUBMITTED', 'CONFIRMED')),
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    submitted_by TEXT,
+    submitted_at TEXT,
+    confirmed_by TEXT,
+    confirmed_at TEXT,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+  );
+
+  CREATE TABLE IF NOT EXISTS inventory_check_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    check_id INTEGER NOT NULL,
+    box_no TEXT NOT NULL,
+    operator TEXT NOT NULL,
+    scanned_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    FOREIGN KEY (check_id) REFERENCES inventory_checks(id),
+    UNIQUE (check_id, box_no)
+  );
+
+  CREATE TABLE IF NOT EXISTS inventory_check_diffs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    check_id INTEGER NOT NULL,
+    box_no TEXT NOT NULL,
+    diff_type TEXT NOT NULL
+      CHECK (diff_type IN ('EXTRA_SCAN', 'MISSING_SCAN', 'STATUS_MISMATCH', 'LOCATION_MISMATCH')),
+    batch_no TEXT,
+    expected_status TEXT,
+    actual_status TEXT,
+    expected_location TEXT,
+    actual_location TEXT,
+    details TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    FOREIGN KEY (check_id) REFERENCES inventory_checks(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS inventory_check_confirmations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    check_id INTEGER NOT NULL,
+    operator TEXT NOT NULL,
+    operator_role TEXT NOT NULL,
+    opinion TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    FOREIGN KEY (check_id) REFERENCES inventory_checks(id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_inv_checks_check_no ON inventory_checks(check_no);
+  CREATE INDEX IF NOT EXISTS idx_inv_checks_status ON inventory_checks(status);
+  CREATE INDEX IF NOT EXISTS idx_inv_checks_location ON inventory_checks(location);
+  CREATE INDEX IF NOT EXISTS idx_inv_check_items_check_id ON inventory_check_items(check_id);
+  CREATE INDEX IF NOT EXISTS idx_inv_check_diffs_check_id ON inventory_check_diffs(check_id);
+  CREATE INDEX IF NOT EXISTS idx_inv_check_diffs_type ON inventory_check_diffs(diff_type);
+  CREATE INDEX IF NOT EXISTS idx_inv_check_confirmations_check_id ON inventory_check_confirmations(check_id);
+
   CREATE TABLE IF NOT EXISTS configs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     key TEXT UNIQUE NOT NULL,
