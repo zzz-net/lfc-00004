@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const model = require('../models/dataModel');
 const { requireAuth, validateTemperature, validateSealNo, validateTimeout } = require('../middleware/validator');
+const { AUDIT_ACTION } = require('../constants');
 
 router.get('/statuses', (req, res) => {
   res.json({
@@ -157,7 +158,7 @@ router.post('/batches/:batch_no/outbound', requireAuth, (req, res) => {
       outbound_time: new Date().toISOString()
     },
     {
-      action: 'OUTBOUND',
+      action: AUDIT_ACTION.OUTBOUND,
       operator: req.operator,
       operator_role: req.role,
       details: `由 ${req.operator} 执行出库`
@@ -281,7 +282,7 @@ router.post('/batches/:batch_no/sign', requireAuth, (req, res) => {
       model.addAuditLog({
         batch_no,
         box_no: box.box_no,
-        action: 'SIGN',
+        action: AUDIT_ACTION.SIGN,
         old_status: box.status,
         new_status: model.STATUS.SIGNED,
         operator: req.operator,

@@ -432,16 +432,23 @@ curl -X POST http://localhost:3000/api/batches/import \
 lfc-00004/
 ├── package.json
 ├── README.md
+├── regression-test.js                 # 签收回归测试
+├── regression-test-inventory-check.js # 盘点模块回归测试
 └── src/
-    ├── server.js              # 服务入口
-    ├── data/                  # SQLite 数据目录（自动生成）
+    ├── server.js                      # 服务入口
+    ├── constants.js                   # 统一枚举、标签、审计动作、错误码→HTTP映射
+    ├── data/                          # SQLite 数据目录（自动生成）
     ├── middleware/
-    │   └── validator.js       # 权限 + 温度/封签/超时校验
+    │   └── validator.js               # 权限 + 温度/封签/超时校验
     ├── models/
-    │   ├── db.js              # 建表 + 初始化
-    │   └── dataModel.js       # 状态机 + 数据访问层
+    │   ├── db.js                      # 建表 + 初始化
+    │   ├── dataModel.js               # 箱子状态机 + 数据访问层
+    │   └── inventoryCheckModel.js     # 盘点数据访问层（纯 SQL）
+    ├── services/
+    │   └── inventoryCheckService.js   # 盘点业务逻辑（校验、状态流转、差异计算）
     └── routes/
-        └── index.js           # 全部 API 路由
+        ├── index.js                   # 批次/签收/冻结 API 路由
+        └── inventoryCheck.js          # 盘点 API 路由
 ```
 
 ---
@@ -465,3 +472,14 @@ lfc-00004/
 | `ALREADY_FROZEN`        | 已冻结的批次/箱子再冻结                |
 | `ALREADY_CLOSED`        | 已关闭的批次/箱子再冻结                |
 | `NOT_FROZEN`            | 非冻结状态下尝试复核关闭               |
+| `DUPLICATE_CHECK_NO`    | 盘点单号重复                           |
+| `CHECK_NOT_FOUND`       | 盘点单不存在                           |
+| `CHECK_NOT_DRAFT`       | 非草稿状态尝试修改盘点单               |
+| `CHECK_ALREADY_SUBMITTED`| 盘点单已提交，不可重复提交            |
+| `CHECK_ALREADY_CONFIRMED`| 盘点单已确认，不可再操作              |
+| `CHECK_NOT_SUBMITTED`   | 盘点单未提交，无法确认                 |
+| `DUPLICATE_BOX_IN_CHECK`| 同一盘点单中箱号重复                   |
+| `DUPLICATE_BOX_IN_REQUEST`| 同一请求中箱号重复                   |
+| `BOX_CLOSED`            | 箱号已关闭，不可盘点                   |
+| `BOX_FROZEN`            | 箱号已冻结，不可盘点                   |
+| `EMPTY_CHECK_ITEMS`     | 盘点单无扫描明细，无法提交             |

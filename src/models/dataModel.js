@@ -1,13 +1,5 @@
 const db = require('./db');
-
-const STATUS = {
-  PENDING_OUTBOUND: 'PENDING_OUTBOUND',
-  IN_TRANSIT: 'IN_TRANSIT',
-  PENDING_SIGN: 'PENDING_SIGN',
-  SIGNED: 'SIGNED',
-  FROZEN: 'FROZEN',
-  REVIEWED_CLOSED: 'REVIEWED_CLOSED'
-};
+const { BOX_STATUS: STATUS, BOX_STATUS_LABELS: STATUS_LABELS, AUDIT_ACTION } = require('../constants');
 
 const STATUS_TRANSITIONS = {
   [STATUS.PENDING_OUTBOUND]: [STATUS.IN_TRANSIT, STATUS.PENDING_SIGN, STATUS.FROZEN],
@@ -16,15 +8,6 @@ const STATUS_TRANSITIONS = {
   [STATUS.SIGNED]: [STATUS.REVIEWED_CLOSED],
   [STATUS.FROZEN]: [STATUS.REVIEWED_CLOSED, STATUS.PENDING_OUTBOUND, STATUS.IN_TRANSIT, STATUS.PENDING_SIGN, STATUS.SIGNED],
   [STATUS.REVIEWED_CLOSED]: []
-};
-
-const STATUS_LABELS = {
-  [STATUS.PENDING_OUTBOUND]: '待出库',
-  [STATUS.IN_TRANSIT]: '运输中',
-  [STATUS.PENDING_SIGN]: '待签收',
-  [STATUS.SIGNED]: '已签收',
-  [STATUS.FROZEN]: '异常冻结',
-  [STATUS.REVIEWED_CLOSED]: '复核关闭'
 };
 
 function isValidStatusTransition(current, next) {
@@ -145,7 +128,7 @@ function createBatch(batchData, boxes, operator) {
     addAuditLog({
       batch_no: batchData.batch_no,
       box_no: null,
-      action: 'IMPORT',
+      action: AUDIT_ACTION.IMPORT,
       old_status: null,
       new_status: STATUS.PENDING_OUTBOUND,
       operator,
@@ -246,7 +229,7 @@ function freezeBox(batchNo, boxNo, reason, evidence, operator, operatorRole) {
     addAuditLog({
       batch_no: batchNo,
       box_no: boxNo,
-      action: 'FREEZE',
+      action: AUDIT_ACTION.FREEZE,
       old_status: box.status,
       new_status: STATUS.FROZEN,
       operator,
@@ -300,7 +283,7 @@ function freezeBatch(batchNo, reason, evidence, operator, operatorRole) {
     addAuditLog({
       batch_no: batchNo,
       box_no: null,
-      action: 'FREEZE',
+      action: AUDIT_ACTION.FREEZE,
       old_status: batch.status,
       new_status: STATUS.FROZEN,
       operator,
@@ -344,7 +327,7 @@ function reviewClose(batchNo, opinion, operator, operatorRole, boxNo = null) {
       addAuditLog({
         batch_no: batchNo,
         box_no: boxNo,
-        action: 'REVIEW_CLOSE',
+        action: AUDIT_ACTION.REVIEW_CLOSE,
         old_status: box.status,
         new_status: STATUS.REVIEWED_CLOSED,
         operator,
@@ -383,7 +366,7 @@ function reviewClose(batchNo, opinion, operator, operatorRole, boxNo = null) {
     addAuditLog({
       batch_no: batchNo,
       box_no: null,
-      action: 'REVIEW_CLOSE',
+      action: AUDIT_ACTION.REVIEW_CLOSE,
       old_status: batch.status,
       new_status: STATUS.REVIEWED_CLOSED,
       operator,

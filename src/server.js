@@ -2,8 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const routes = require('./routes');
 const inventoryCheckRoutes = require('./routes/inventoryCheck');
-const { STATUS_LABELS } = require('./models/dataModel');
-const { CHECK_STATUS_LABELS, DIFF_TYPE_LABELS } = require('./models/inventoryCheckModel');
+const { BOX_STATUS_LABELS, CHECK_STATUS_LABELS, DIFF_TYPE_LABELS } = require('./constants');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -55,7 +54,7 @@ app.listen(PORT, () => {
   console.log(`  API 前缀:  http://localhost:${PORT}/api`);
   console.log('');
   console.log('  箱子状态流转:');
-  Object.entries(STATUS_LABELS).forEach(([k, v]) => {
+  Object.entries(BOX_STATUS_LABELS).forEach(([k, v]) => {
     console.log(`    - ${k}: ${v}`);
   });
   console.log('');
